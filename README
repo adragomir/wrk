@@ -22,6 +22,10 @@ Basic Usage
   Requests/sec: 503396.23
   Transfer/sec:    176.16MB
 
+Dynamic URLS
+
+  wrk -t8 -c 400 http://localhost:8080/dynamic.php?ssid={RANDOM|34}&timestamp={LONGINC|144444444|99}
+
 Benchmarking Tips
 
   The machine running wrk must have a sufficient number of ephemeral ports
