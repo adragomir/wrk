@@ -133,10 +133,15 @@ int main(int argc, char **argv) {
     uint64_t connections = cfg.connections / cfg.threads;
     uint64_t requests    = cfg.requests    / cfg.threads;
 
+    uint64_t actual_requests = 0;
     for (uint64_t i = 0; i < cfg.threads; i++) {
         thread *t = &threads[i];
         t->connections = connections;
         t->requests    = requests;
+        actual_requests += requests;
+        t->scanner = calloc(1, sizeof(DynArgScanner));
+        DynArgScanner_init(t->scanner, request.buf);
+        DynArgScanner_scan(t->scanner);
 
         if (pthread_create(&t->thread, NULL, &thread_main, t)) {
             char *msg = strerror(errno);
@@ -145,7 +150,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    printf("Making %"PRIu64" requests to %s\n", cfg.requests, url);
+    printf("Making %"PRIu64" requests (actually %"PRIu64", %"PRIu64" per thread) to %s\n", cfg.requests, actual_requests, requests, url);
     printf("  %"PRIu64" threads and %"PRIu64" connections\n", cfg.threads, cfg.connections);
 
     uint64_t start    = time_us();
@@ -326,7 +331,9 @@ static int check_timeouts(aeEventLoop *loop, long long id, void *data) {
 static void socket_writeable(aeEventLoop *loop, int fd, void *data, int mask) {
     connection *c = data;
 
-    if (write(fd, request.buf, request.size) < request.size) goto error;
+    bstring tmp = DynArgScanner_get_url(c->thread->scanner);
+    int length = blength(tmp);
+    if (write(fd, bdata(tmp), length) < length) goto error;
     c->start = time_us();
     aeDeleteFileEvent(loop, fd, AE_WRITABLE);
     aeCreateFileEvent(loop, fd, AE_READABLE, socket_readable, c);

@@ -10,6 +10,7 @@
 #include "ae.h"
 #include "http_parser.h"
 #include "tinymt64.h"
+#include "dynamic.h"
 
 #define VERSION  "1.1.0"
 #define RECVBUF  8192
@@ -37,6 +38,7 @@ typedef struct {
     uint64_t start;
     tinymt64_t rand;
     errors errors;
+    DynArgScanner *scanner;
     struct connection *cs;
 } thread;
 
