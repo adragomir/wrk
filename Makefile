@@ -1,5 +1,6 @@
 CFLAGS  := -std=c99 -Wall -O2 -D_REENTRANT -g
 LIBS    := -lpthread -lm
+RAGEL   := /usr/local/bin/ragel
 
 TARGET  := $(shell uname -s | tr [A-Z] [a-z] 2>/dev/null || echo unknown)
 
@@ -28,7 +29,7 @@ $(ODIR):
 	@mkdir $@
 
 src/dynamic.c: src/dynamic.rl
-	ragel src/dynamic.rl
+	$(RAGEL) src/dynamic.rl
 
 $(ODIR)/%.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
